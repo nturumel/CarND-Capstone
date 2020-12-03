@@ -1,0 +1,17 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "",
+        "limitSymbolsToIncludedHeaders": true
+      },
+      "includePath": [
+        "/opt/ros/melodic/include/**",
+        "/mnt/c/Users/nihar/CarND-Capstone/ros/devel/include/**",
+        "/mnt/c/Users/nihar/CarND-Capstone/ros/src/waypoint_follower/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS"
+    }
+  ]
+}

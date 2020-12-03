@@ -41,12 +41,10 @@ class WaypointUpdater(object):
         rospy.spin()
 
     def pose_cb(self, msg):
-        # TODO: Implement
-        pass
-
+        self.pos = [msg.position.x, msg.position.y, msg.position.z]
+        
     def waypoints_cb(self, waypoints):
-        # TODO: Implement
-        pass
+        self.baseWayPoints = [waypoints[:].pose.pose.x, waypoints[:].pose.pose.y, waypoints[:].pose.pose.z]
 
     def traffic_cb(self, msg):
         # TODO: Callback for /traffic_waypoint message. Implement
