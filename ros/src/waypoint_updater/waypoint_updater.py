@@ -50,7 +50,7 @@ class WaypointUpdater(object):
     def final_waypoints_callback(self):
         rate = rospy.Rate(30)
         while not rospy.is_shutdown():
-            if self.pose and self.baseWayPoints:
+            if self.pose and self.base_Way_Points:
                 # Get closest waypoint 
                 closest_waypoint_idx  = self.get_closest_waypoint_idx()
                 self.publish_waypoints(closest_waypoint_idx)
@@ -63,7 +63,7 @@ class WaypointUpdater(object):
         closest_idx = self.waypoint_tree.query([x,y], 1)[1]
 
         closest_coord = self.waypoints_2d[closest_idx]
-        prev_coord =- self.waypoints_2d[closest_idx - 1]
+        prev_coord = self.waypoints_2d[closest_idx - 1]
 
         cl_vect = np.array(closest_coord)
         prev_vect = np.array(prev_coord)
@@ -87,7 +87,7 @@ class WaypointUpdater(object):
     def waypoints_cb(self, waypoints):
         self.base_Way_Points = waypoints 
         if not self.waypoints_2d:
-            self.waypoints_2d = [[waypoint.pose.pose.pose.position.x, waypoint.pose.pose.pose.position.y] for waypoint in waypoints.waypoint]
+            self.waypoints_2d = [[waypoint.pose.pose.position.x, waypoint.pose.pose.position.y] for waypoint in waypoints.waypoints]
             self.waypoint_tree = KDTree(self.waypoints_2d)
 
     def traffic_cb(self, msg):
