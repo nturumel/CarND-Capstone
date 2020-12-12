@@ -30,27 +30,26 @@ LOOKAHEAD_WPS = 200 # Number of waypoints we will publish. You can change this n
 class WaypointUpdater(object):
     def __init__(self):
         rospy.init_node('waypoint_updater')
-
-        rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
-        rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
-
-        # TODO: Add a subscriber for /traffic_waypoint and /obstacle_waypoint below
-
-
-        self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
+        rospy.loginfo('created updator node')
 
         # TODO: Add other member variables you need below
         self.base_Way_Points  = None
         self.waypoints_2d = None
         self.pose = None
         self.waypoint_tree = None
-        
+
+        # TODO: Add a subscriber for /traffic_waypoint and /obstacle_waypoint below
+        rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
+        rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
+
+        self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
         self.final_waypoints_callback()
 
     def final_waypoints_callback(self):
+        rospy.loginfo('inside final waypoint callback')
         rate = rospy.Rate(30)
         while not rospy.is_shutdown():
-            if self.pose and self.base_Way_Points:
+            if self.pose and self.base_Way_Points and self.waypoint_tree and self.waypoints_2d:
                 # Get closest waypoint 
                 closest_waypoint_idx  = self.get_closest_waypoint_idx()
                 self.publish_waypoints(closest_waypoint_idx)
@@ -78,17 +77,24 @@ class WaypointUpdater(object):
     
     def publish_waypoints(self, closest_idx ) :
         lane = Lane()
-        lane.header = self.base_Way_Points.waypoints[closest_idx: closest_idx + LOOKAHEAD_WPS]
+        rospy.loginfo((self.base_Way_Points.waypoints[closest_idx: closest_idx + LOOKAHEAD_WPS]).waypoints)
+        lane.header.seq = self.base_Way_Points.waypoints[closest_idx: closest_idx + LOOKAHEAD_WPS]
         self.final_waypoints_pub.publish(lane)
 
     def pose_cb(self, msg):
+        rospy.loginfo('inside pose callback')
         self.pose = msg
         
     def waypoints_cb(self, waypoints):
+        rospy.loginfo('inside waypoint callback')
         self.base_Way_Points = waypoints 
+        rospy.loginfo(self.waypoints_2d)
         if not self.waypoints_2d:
             self.waypoints_2d = [[waypoint.pose.pose.position.x, waypoint.pose.pose.position.y] for waypoint in waypoints.waypoints]
             self.waypoint_tree = KDTree(self.waypoints_2d)
+        
+        rospy.loginfo('waypoint tree')
+        rospy.loginfo(self.waypoint_tree)
 
     def traffic_cb(self, msg):
         # TODO: Callback for /traffic_waypoint message. Implement
