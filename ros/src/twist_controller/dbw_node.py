@@ -53,17 +53,22 @@ class DBWNode(object):
         self.brake_pub = rospy.Publisher('/vehicle/brake_cmd',
                                          BrakeCmd, queue_size=1)
 
-        # TODO: Create `Controller` object
-        self.controller = Controller(<Arguments you wish to provide>)
-
         # TODO: Subscribe to all the topics you need to
         # dbw_enabled
         self.dbw_enabled = None
-        #rospy.Subscribe('/vehicle/dbw_enabled', )
+        rospy.Subscriber('/vehicle/dbw_enabled', Bool, self.dbw_enabled_cb)
+    
+        # TODO: Create `Controller` object
+        self.controller = Controller(<Arguments you wish to provide>)
 
-        self.loop()
+        
+        
+        self.publish_cb()
 
-    def loop(self):
+    def dbw_enabled_cb(self, msg):
+        self.dbw_enabled = msg
+
+    def publish_cb(self):
         rate = rospy.Rate(50) # 50Hz
         while not rospy.is_shutdown():
             # TODO: Get predicted throttle, brake, and steering using `twist_controller`
