@@ -4,7 +4,9 @@ ONE_MPH = 0.44704
 
 
 class Controller(object):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, param_data):
+        self.param_data = param_data
+        self.PID = PID()
         
         # TODO: Implement
         pass
