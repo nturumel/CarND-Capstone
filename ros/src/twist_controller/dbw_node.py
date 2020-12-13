@@ -54,9 +54,12 @@ class DBWNode(object):
                                          BrakeCmd, queue_size=1)
 
         # TODO: Create `Controller` object
-        # self.controller = Controller(<Arguments you wish to provide>)
+        self.controller = Controller(<Arguments you wish to provide>)
 
         # TODO: Subscribe to all the topics you need to
+        # dbw_enabled
+        self.dbw_enabled = None
+        #rospy.Subscribe('/vehicle/dbw_enabled', )
 
         self.loop()
 
