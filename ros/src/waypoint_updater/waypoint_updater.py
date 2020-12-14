@@ -10,7 +10,7 @@ from std_msgs.msg import Int32
 import math
 from scipy.spatial import KDTree
 
-MAX_DECEL = 0.5
+
 
 '''
 This node will publish waypoints from the car's current position to some `x` distance ahead.
@@ -26,8 +26,8 @@ as well as to verify your TL classifier.
 
 TODO (for Yousuf and Aaron): Stopline location for each traffic light.
 '''
-
-LOOKAHEAD_WPS = 50 # Number of waypoints we will publish. You can change this number
+MAX_DECEL = 0.5
+LOOKAHEAD_WPS = 25 # Number of waypoints we will publish. You can change this number
 
 
 class WaypointUpdater(object):
