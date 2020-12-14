@@ -5,7 +5,7 @@ import rospy
 
 GAS_DENSITY = 2.858
 ONE_MPH = 0.44704
-
+MAX_BRAKE = 400.0
 
 class Controller(object):
     def __init__(self, param_data):
@@ -19,7 +19,7 @@ class Controller(object):
         ki = 0.1
         kd = 0.
         mn = 0. # minimum throttle value
-        mx = 0.2 # maximum throttle value
+        mx = 0.4 # maximum throttle value
         self.throttle_controller = PID(kp, ki, kd, mn, mx)
         
         # initialise yaw controller (wheel_base, steer_ratio, min_speed, max_lat_accel, max_steer_angle)
@@ -47,13 +47,14 @@ class Controller(object):
         # brake and throttle
         current_time = rospy.get_time()
         delta_t = current_time - self.time
+        self.time = current_time
         throttle = self.throttle_controller.step(error, delta_t)
         brake = 0
 
         if proposed_velocity == 0 and current_velocity < 0.1: # need to stop
             # set throttle to zero and brake to max
             throttle = 0
-            brake = 400
+            brake = MAX_BRAKE 
 
         elif throttle < 0.1 and error < 0: # need to slow down
             # set throttle to zero and calculate the break
