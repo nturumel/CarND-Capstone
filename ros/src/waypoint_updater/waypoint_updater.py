@@ -92,7 +92,7 @@ class WaypointUpdater(object):
         base_Way_Points = self.base_Way_Points.waypoints[closest_idx:farthest_idx]
          
         if self.stop_wp_idx == -1 or (self.stop_wp_idx >= farthest_idx):
-            rospy.loginfo( "farthest={}, stop={}".format(farthest_idx, self.stop_wp_idx))
+            rospy.logwarn( "farthest={}, stop={}".format(farthest_idx, self.stop_wp_idx))
             if(self.stop_wp_idx >= farthest_idx):
                 rospy.logwarn('traffic light is further than the farthest waypoint')
             else:
