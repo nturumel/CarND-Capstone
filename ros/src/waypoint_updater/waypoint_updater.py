@@ -92,12 +92,9 @@ class WaypointUpdater(object):
         base_Way_Points = self.base_Way_Points.waypoints[closest_idx:farthest_idx]
          
         rospy.logwarn( "current={}, farthest={}, stop={}".format(closest_idx, farthest_idx, self.stop_wp_idx))
-        if (self.stop_wp_idx == -1 or self.stop_wp_idx >= farthest_idx or self.stop_wp_idx < closest_idx  ):
-            if(self.stop_wp_idx >= farthest_idx):
-                rospy.logwarn('traffic light is further than the farthest waypoint')
-            else:
-                rospy.logwarn('traffic light is closer than the farthest waypoint but green')
-            lane.waypoints = base_Way_Points
+        if (self.stop_wp_idx >= farthest_idx or self.stop_wp_idx < closest_idx):
+           rospy.logwarn('traffic light is further than the farthest waypoint')
+           lane.waypoints = base_Way_Points
         else:
             rospy.logwarn('red light close, decelerate')
             lane.waypoints = self.decelerate_waypoints(base_Way_Points, closest_idx)

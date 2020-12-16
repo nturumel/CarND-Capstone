@@ -166,28 +166,27 @@ class TLDetector(object):
         
         # List of positions that correspond to the line to stop in front of for a given intersection
         stop_line_positions = self.config['stop_line_positions']
+        car_current_waypoint = None
         if(self.pose):
-            car_position = self.get_closest_waypoint(self.pose.pose.position.x, self.pose.pose.position.y)
+            car_current_waypoint = self.get_closest_waypoint(self.pose.pose.position.x, self.pose.pose.position.y)
 
-        #TODO find the closest visible traffic light (if one exists)
-        # each stop line maps to the traffic light with sam index
-        
-        # FIXME: add a kd tree, does not make sense with 8
-        light = None
-        light_wp = None
-        diff = len(self.waypoints.waypoints)
-        for i, light in enumerate(self.lights):
-            stop_line = stop_line_positions[i]
-            stop_line_waypoint = self.get_closest_waypoint(stop_line[0], stop_line[1])
-            if car_position >= stop_line_waypoint and diff > car_position - stop_line_waypoint:
-                diff =   car_position - stop_line_waypoint
-                light = self.lights[i]
-                light_wp = stop_line_waypoint
+            #TODO find the closest visible traffic light (if one exists)
+            # each stop line maps to the traffic light with sam index
+            light = None
+            light_wp = None
+            diff = len(self.waypoints.waypoints)
+            for i, light in enumerate(self.lights):
+                stop_line = stop_line_positions[i]
+                stop_line_waypoint = self.get_closest_waypoint(stop_line[0], stop_line[1])
+                if car_current_waypoint >= stop_line_waypoint and diff > car_current_waypoint - stop_line_waypoint:
+                    diff =   car_current_waypoint - stop_line_waypoint
+                    light = self.lights[i]
+                    light_wp = stop_line_waypoint
 
-        if light:
-            state = self.get_light_state(light)
-            #rospy.loginfo('Found a Light: %d', state)
-            return light_wp, state
+            if light:
+                state = self.get_light_state(light)
+                #rospy.loginfo('Found a Light: %d', state)
+                return light_wp, state
       
         return -1, TrafficLight.UNKNOWN
 
