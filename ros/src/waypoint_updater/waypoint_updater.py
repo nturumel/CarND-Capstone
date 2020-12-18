@@ -81,8 +81,8 @@ class WaypointUpdater(object):
 
         return closest_idx
     
-    def publish_waypoints(self, closest_idx) :
-        final_lane = self.generate_lane(closest_idx)
+    def publish_waypoints(self) :
+        final_lane = self.generate_lane()
         self.final_waypoints_pub.publish(final_lane)
 
     def generate_lane(self):
