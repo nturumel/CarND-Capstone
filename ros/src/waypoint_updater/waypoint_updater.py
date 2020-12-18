@@ -30,7 +30,7 @@ MAX_DECEL = 0.5
 LOOKAHEAD_WPS = 100 # Number of waypoints we will publish. You can change this number
 CONST_DECEL = 1 / LOOKAHEAD_WPS # Deceleration constant for smooth breaking
 PUBLISHING_RATE = 20
-STOP_LINE_MARGIN = 2 # Padding between stopline and the car's center
+STOP_LINE_MARGIN = 4 # Padding between stopline and the car's center
 
 
 class WaypointUpdater(object):
