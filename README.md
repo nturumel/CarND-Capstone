@@ -1,21 +1,45 @@
+##CarND-Capstone
 This is the project repo for the final project of the Udacity Self-Driving Car Nanodegree: Programming a Real Self-Driving Car. For more information about the project, see the project introduction [here](https://classroom.udacity.com/nanodegrees/nd013/parts/6047fe34-d93c-4f50-8336-b70ef10cb4b2/modules/e1a23b06-329a-4684-a717-ad476f0d8dff/lessons/462c933d-9f24-42d3-8bdc-a08a5fc866e4/concepts/5ab4b122-83e6-436d-850f-9f4d26627fd9).
 
-Please use **one** of the two installation options, either native **or** docker installation.
+###Setting up:
+You have the three options for setting up this project: Virtual Machine, Native Installation and docker. 
+If you are running a windows machine like me, I would recommend using docker. Windows wsl2 (Windows Subsytem Linux) has tight integration with Docker Desktop which makes for a delightful development experience. 
+I will be going over how I used docker to get started. If you want to use any of the other two options, please refer [here](https://github.com/udacity/CarND-Capstone/blob/master/README.md).
 
-### Native Installation
+Steps:
+1. Get [wsl2](https://docs.microsoft.com/en-us/windows/wsl/install-win10) on your windows machine.
+2. Install [Docker Desktop](https://www.docker.com/products/docker-desktop).
+3. Although not necessary, I would highly recommend getting [vscode](https://code.visualstudio.com/) and installing the [docker extension](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-docker) and [remote development extension pack](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack). This would allow you to explore subystem directories, launch containers, mount directories and do a lot more right from your code editor.
+4. Get the [code](https://github.com/nturumel/CarND-Capstone) and the [simulator](https://github.com/udacity/CarND-Capstone/releases).
+5. Open wsl2 bash terminal.
+6. Run: 
+```bash 
+    docker pull redherring2141/carnd-capstone
+```
+ to get the docker necessary image.
 
-* Be sure that your workstation is running Ubuntu 16.04 Xenial Xerus or Ubuntu 14.04 Trusty Tahir. [Ubuntu downloads can be found here](https://www.ubuntu.com/download/desktop).
-* If using a Virtual Machine to install Ubuntu, use the following configuration as minimum:
-  * 2 CPU
-  * 2 GB system memory
-  * 25 GB of free hard drive space
+7. `cd` into the project directory. 
+8.  Run  (might want to create a script for this):
+```bash
+    docker run -p 4567:4567 -v {pwd}:/capstone -v /tmp/log:/root/.ros/  --name={container_name} --rm -it    redherring2141/carnd-capstone:latest
+```
+9. If you want to set up another terminal, simply run:
+```bash
+    docker exec -it <container name>
+ ```
+ and run:
+ ```bash
+    source /root/ros_entrypoint.sh 
+ ```
+11.  `cd` into the ros directory of the container and run the following to launch the project:
+```bash
+    catkin_make
+    source devel/setup.sh
+    roslaunch launch/styx.launch
+```
+12.  Start the simulator, turn off **manual** mode and start the **camera**.     
 
-  The Udacity provided virtual machine has ROS and Dataspeed DBW already installed, so you can skip the next two steps if you are using this.
 
-* Follow these instructions to install ROS
-  * [ROS Kinetic](http://wiki.ros.org/kinetic/Installation/Ubuntu) if you have Ubuntu 16.04.
-  * [ROS Indigo](http://wiki.ros.org/indigo/Installation/Ubuntu) if you have Ubuntu 14.04.
-* Download the [Udacity Simulator](https://github.com/udacity/CarND-Capstone/releases).
 
 ### Docker Installation
 [Install Docker](https://docs.docker.com/engine/installation/)
@@ -72,8 +96,7 @@ roslaunch launch/site.launch
 5. Confirm that traffic light detection works on real life images
 
 ### Other library/driver information
-Outside of `requirements.txt`, here is information on other driver/library versions used in the simulator and Carla:
-
+Outside of `requirements.txt`, here is information on other driver/library versions used in the simulator and Carla: 
 Specific to these libraries, the simulator grader and Carla use the following:
 
 |        | Simulator | Carla  |
