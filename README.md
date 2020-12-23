@@ -63,8 +63,153 @@ For those enrolled in the Udacity self-driving nanodegree, there is an opportuni
 |ros/src/waypoint_updater/ |waypoint_updater|Yes|/base_waypoints, /current_pose, /traffic_waypoint|/final_waypoints                                  |
 
 ### Nodes:
-#### Traffic Light Detection Node:
+#### **1. Traffic Light Detection Node:**
+This node identifies traffic lights in the vehicle's path. When using the simulator, you get a list containing the configuration of the traffic lights in the track. You also get a list of the base waypoints which describe the path. The node is also aware of the current position of the vehicle. You can combine all of the beforementioned information to figure out what the waypoint of an approaching traffic light is.
+You can use a KD Tree for that purpose:
+```python
+def waypoints_cb(self, waypoints):
+        self.waypoints = waypoints
+        # make a KD tree
+        if not self.waypoints_2d:
+            self.waypoints_2d = [[waypoint.pose.pose.position.x, waypoint.pose.pose.position.y] for waypoint in waypoints.waypoints]
+            self.waypoint_tree = KDTree(self.waypoints_2d)
+```
+```python
+ car_current_waypoint = self.get_closest_waypoint(self.pose.pose.position.x, self.pose.pose.position.y)
 
+            #TODO find the closest visible traffic light (if one exists)
+            # each stop line maps to the traffic light with sam index
+            diff = len(self.waypoints.waypoints)
+            for i, light in enumerate(self.lights):
+                stop_line = stop_line_positions[i]
+                stop_line_waypoint = self.get_closest_waypoint(stop_line[0], stop_line[1])
+                
+                # Calculate and compare the distance
+                d = stop_line_waypoint - car_current_waypoint
+                if 0 <= d < diff:
+                    diff =  d
+                    closest_light = self.lights[i]
+                    light_wp_idx = stop_line_waypoint
+```
+#### **2. Waypoint Updator Node:**
+This node generates a list of waypoints for the vehicle to follow, It first loads in the route waypoints, the vehicles current poisition and traffic light information. Based in that information, it generates a list of waypoints that lie ahead of the vehicle, and assign each waypoint with a specific velocity to control the car's speed. There are a few "global" parameters that determine things like the number of waypoints returned, the deceleration rate, the buffer between the light and the vehicle, etc. The publishing rate determines how frequently the output is generated.
+```python
+MAX_DECEL = 0.5
+LOOKAHEAD_WPS = 100 # Number of waypoints we will publish. You can change this number
+CONST_DECEL = 1 / LOOKAHEAD_WPS # Deceleration constant for smooth breaking
+PUBLISHING_RATE = 20
+STOP_LINE_MARGIN = 4 # Padding between stopline and the car's center
+```  
+It becomes important to be able to quickly localise the car on the route map, and a KD Tree is a handy tool for that:
+```python
+ self.base_Way_Points = waypoints 
+        #rospy.loginfo(self.waypoints_2d)
+        if not self.waypoints_2d:
+            self.waypoints_2d = [[waypoint.pose.pose.position.x, waypoint.pose.pose.position.y] for waypoint in waypoints.waypoints]
+            self.waypoint_tree = KDTree(self.waypoints_2d)
+        
+```
+We can use the hyperplane equation to get the next closest waypoint: 
+```python
+def get_closest_waypoint_idx(self):
+        x = self.pose.pose.position.x
+        y = self.pose.pose.position.y
+
+        closest_idx = self.waypoint_tree.query([x,y], 1)[1]
+
+        # Hyperplane fun to see if point is ahead or not
+        closest_coord = self.waypoints_2d[closest_idx]
+        prev_coord = self.waypoints_2d[closest_idx - 1]
+        cl_vect = np.array(closest_coord)
+        prev_vect = np.array(prev_coord)
+        pos_vect = np.array([x,y])
+        val = np.dot(cl_vect - prev_vect, pos_vect - cl_vect)
+
+        if val > 0:
+            closest_idx = (closest_idx + 1) % len(self.waypoints_2d)
+
+        return closest_idx
+```
+In case the vehicle is approaching a traffic light, I slow it down with a combination of linear and quadratic deceleration,
+```python
+def generate_lane(self):
+        lane = Lane()
+        
+        closest_idx = self.get_closest_waypoint_idx()
+        farthest_idx = closest_idx + LOOKAHEAD_WPS
+        base_Way_Points = self.base_Way_Points.waypoints[closest_idx:farthest_idx]
+    
+         
+        rospy.logwarn( "current={}, farthest={}, stop={}".format(closest_idx, farthest_idx, self.stop_wp_idx))
+        if (self.stop_wp_idx >= farthest_idx or self.stop_wp_idx < closest_idx):
+           rospy.logwarn('traffic light is further than the farthest waypoint')
+           lane.waypoints = base_Way_Points
+        else:
+            rospy.logwarn('red light close, decelerate')
+            lane.waypoints = self.decelerate_waypoints(base_Way_Points, closest_idx)
+        
+        return lane
+
+    
+    def decelerate_waypoints(self, waypoints, closest_idx):
+        temp =[]
+        for i, wp in enumerate(waypoints):
+            
+            p = Waypoint()
+            p.pose = wp.pose
+
+            stop_idx = max(self.stop_wp_idx - closest_idx - STOP_LINE_MARGIN, 0) # stopping a couple of waypoints before the end
+            dist = self.distance(waypoints, i, stop_idx)
+            vel = math.sqrt(2 * MAX_DECEL * dist) + (i * CONST_DECEL)
+
+            if vel < 1:
+                vel = 0.
+            
+            p.twist.twist.linear.x = min(vel, wp.twist.twist.linear.x)
+            temp.append(p)
+        return temp
+```
+#### **3. DBW Node:**
+This node acts as part of the control module of the vehicle. It takes in the current velocity and requested velovity in the form of rostopics '/current_velocity' and '/twist_cmd'. The node, with the help of a PID controller, a Yaw controller and a lowpass velocity filter determines what the steering, break and throttle of the vehicle should be. It is turned off by default and is enabled by the '/dbw_enabled' rostopic. '/dbw_enabled' is set to true when the simulator is not run on manual. 
+
+```python
+def control(self, proposed_velocity, proposed_angular_velocity, current_velocity, dbw_enabled):
+        # TODO: Change the arg, kwarg list to suit your needs
+        # Return throttle, brake, steer
+        if not dbw_enabled:
+            self.throttle_controller.reset()
+            return 0, 0, 0
+        #steering
+        steering = self.yaw_controller.get_steering(proposed_velocity, proposed_angular_velocity, current_velocity)
+        error = proposed_velocity - current_velocity 
+        
+        # brake and throttle
+        current_time = rospy.get_time()
+        delta_t = current_time - self.time
+        self.time = current_time
+        throttle = self.throttle_controller.step(error, delta_t)
+        brake = 0
+
+        if proposed_velocity == 0 and current_velocity < 0.1: # need to stop
+            # set throttle to zero and brake to max
+            throttle = 0
+            brake = MAX_BRAKE 
+
+        elif throttle < 0.1 and error < 0: # need to slow down
+            # set throttle to zero and calculate the break
+            throttle = 0
+            # FIXME: needs to replaced by fuel left
+            vehicle_mass  = self.param_data['vehicle_mass'] + GAS_DENSITY * self.param_data['fuel_capacity']  
+            decel = min(error, self.param_data['decel_limit'])
+            brake = abs((vehicle_mass) * self.param_data['wheel_radius'] * (error / delta_t))
+
+
+        return throttle, brake, steering
+```
 ## Challenges:
+Due to the asynchronous natre of ROS, each node gets initialised and begins processing at its own accord, so often, a node may try to work through data that is either outdated or unavailable. One way to acoid it is to use conditions like `if {some_entity} not None:` and proceed once the field has been populated. The otehr is to use ros wait for message, eg. `os::topic::waitForMessage("/path_planned/edge", create_path);`.
 ## Results:
+The car is able to navigate safely across the track.
+![result gif](imgs/result_gif.gif)
 ## Future Todo's:
+Implement Object Detection and Traffic sign Classifier. This will enable the code to be used in actual vehicles. 
